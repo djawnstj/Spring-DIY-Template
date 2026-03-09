@@ -8,11 +8,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * 강의 삭제 서블릿
+ * 강의 서블릿
  *
  */
 @WebServlet("/lectures/*")
-public class LectureDeleteServlet extends HttpServlet {
+public class LectureServlet extends HttpServlet {
 
     private final LectureService lectureService = new LectureService();
 
