@@ -16,7 +16,7 @@ import java.io.IOException;
 @WebServlet("/lecture-registration")
 public class LectureRegisterServlet extends HttpServlet {
 
-    private LectureService lectureService = new LectureService();
+    private final LectureService lectureService = new LectureService();
 
     /*
      * 강의 등록화면 제공
@@ -29,7 +29,6 @@ public class LectureRegisterServlet extends HttpServlet {
     /*
      * 강의 등록하기
      * */
-
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         ObjectMapper objectMapper = new ObjectMapper();

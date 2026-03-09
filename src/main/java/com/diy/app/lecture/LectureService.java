@@ -36,4 +36,13 @@ public class LectureService {
             throw new IllegalArgumentException("가격은 필수입니다.");
         }
     }
+
+    public void deleteLecture(long id) {
+        Lecture lecture = store.get(id);
+        if (lecture == null) {
+            throw new IllegalArgumentException("강의가 존재하지 않습니다.");
+        }
+
+        store.remove(id);
+    }
 }

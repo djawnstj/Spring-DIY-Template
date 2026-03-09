@@ -15,7 +15,7 @@ import java.util.List;
 @WebServlet("/lecture-list")
 public class LectureListServlet extends HttpServlet {
 
-    private LectureService lectureService = new LectureService();
+    private final LectureService lectureService = new LectureService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
