@@ -1,7 +1,5 @@
-package com.diy.app;
+package com.diy.framework.web.servlet;
 
-import com.diy.app.servlet.HomeServlet;
-import com.diy.app.servlet.LectureServlet;
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.startup.Tomcat;
@@ -13,43 +11,39 @@ import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.security.CodeSource;
 
-public class Main {
-    public static void main(String[] args) {
 
-        Tomcat tomcat = new Tomcat();
-        tomcat.setPort(8085);
+public class TestServer {
 
+    private final Tomcat tomcat = new Tomcat();
+    private final int port = 8089;
 
+    public void start() {
+        setServerContext();
+        startDaemonAwaitThread();
+        startServerInternal();
+    }
+
+    public void startServerInternal() {
         try {
-            final Context context = setServerContext(tomcat);
-            Tomcat.addServlet(context, "homeServlet", new HomeServlet());
-            context.addServletMappingDecoded("/home", "homeServlet");
-
-            Tomcat.addServlet(context, "lectureServlet", new LectureServlet());
-            context.addServletMappingDecoded("/lectures", "lectureServlet");
-
+            tomcat.setPort(port);
             tomcat.start();
             final Thread awaitThread = new Thread(() -> tomcat.getServer().await());
             awaitThread.start();
-
-            System.out.println("서버 실행");
         } catch (LifecycleException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("톰켓 서버 실행 중 예외가 발생했습니다.", e);
         }
-
     }
 
-    private static Context setServerContext(final Tomcat tomcat) {
+    private void setServerContext() {
         final String resourcesPath = Paths.get("src", "main", "resources").toString();
         final String absoluteResourcesPath = new File(resourcesPath).getAbsolutePath();
 
-        final Context context = tomcat.addWebapp("/", absoluteResourcesPath);
+        final Context context = this.tomcat.addWebapp("/", absoluteResourcesPath);
 
         setServerResources(context);
-        return context;
     }
 
-    private static void setServerResources(final Context context) {
+    private void setServerResources(final Context context) {
         final String classPath = getClassPath();
 
         final StandardRoot resources = new StandardRoot(context);
@@ -58,13 +52,20 @@ public class Main {
         context.setResources(resources);
     }
 
-    private static String getClassPath() {
+    private String getClassPath() {
         try {
-            final CodeSource codeSource = Main.class.getProtectionDomain().getCodeSource();
+            final CodeSource codeSource = this.getClass().getProtectionDomain().getCodeSource();
 
             return new File(codeSource.getLocation().toURI()).getAbsolutePath();
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void startDaemonAwaitThread() {
+        final Thread awaitThread = new Thread(() -> TestServer.this.tomcat.getServer().await());
+        awaitThread.setContextClassLoader(getClass().getClassLoader());
+        awaitThread.setDaemon(false);
+        awaitThread.start();
     }
 }
