@@ -1,5 +1,7 @@
 package com.diy.framework.web;
 
+import com.diy.app.LectureListController;
+
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -15,8 +17,12 @@ public class DispatcherServlet extends HttpServlet {
         String method = req.getMethod();
         String uri = req.getRequestURI();
 
-        System.out.println("요청: " + method + " " + uri);
+        if (method.equals("GET") && uri.equals("/lectures")) {
+            new LectureListController().handle(req, resp);
+            return;
+        }
 
-        resp.getWriter().write("Dispatcher 동작 확인");
+        resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        resp.getWriter().write("404 NOT FOUND");
     }
 }
