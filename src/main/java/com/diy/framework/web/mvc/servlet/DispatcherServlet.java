@@ -1,9 +1,10 @@
-package com.diy.framework.web;
+package com.diy.framework.web.mvc.servlet;
 
 import com.diy.app.LectureCreateController;
 import com.diy.app.LectureDeleteController;
 import com.diy.app.LectureListController;
 import com.diy.app.LectureUpdateController;
+import com.diy.framework.web.mvc.controller.Controller;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
