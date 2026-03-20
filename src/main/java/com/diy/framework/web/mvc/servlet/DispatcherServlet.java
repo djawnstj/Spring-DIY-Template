@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-@WebServlet("/*")
+@WebServlet("/")
 public class DispatcherServlet extends HttpServlet {
 
     private final Map<String, Controller> handlerMapping = new HashMap<>();
@@ -32,9 +32,9 @@ public class DispatcherServlet extends HttpServlet {
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
         resp.setContentType("text/html; charset=UTF-8");
 
-        String method = req.getMethod();
         String uri = req.getRequestURI();
 
+        String method = req.getMethod();
         String key = method + ":" + uri;
 
         Controller controller = handlerMapping.get(key);
