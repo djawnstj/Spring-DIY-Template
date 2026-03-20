@@ -7,9 +7,19 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @WebServlet("/*")
 public class DispatcherServlet extends HttpServlet {
+
+    private final Map<String, Controller> handlerMapping = new HashMap<>();
+
+    @Override
+    public void init() {
+        handlerMapping.put("GET:/lectures", new LectureListController());
+    }
+
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setContentType("text/html; charset=UTF-8");
@@ -17,8 +27,12 @@ public class DispatcherServlet extends HttpServlet {
         String method = req.getMethod();
         String uri = req.getRequestURI();
 
-        if (method.equals("GET") && uri.equals("/lectures")) {
-            new LectureListController().handle(req, resp);
+        String key = method + ":" + uri;
+
+        Controller controller = handlerMapping.get(key);
+
+        if (controller != null) {
+            controller.handle(req, resp);
             return;
         }
 
