@@ -43,21 +43,34 @@ public class DispatcherServlet extends HttpServlet {
         Controller controller = handlerMapping.get(key);
 
         if (controller != null) {
-            ModelAndView mv = controller.handleRequest(req, resp);
-
-            for (Map.Entry<String, Object> entry : mv.getModel().entrySet()) {
-                req.setAttribute(entry.getKey(), entry.getValue());
+            try {
+                ModelAndView mv = controller.handleRequest(req, resp);
+                render(mv, req, resp);
+            } catch (Exception e) {
+                throw new ServletException(e);
             }
-
-            ViewResolver viewResolver = new ViewResolver();
-            View view = viewResolver.resolveView(mv.getViewName());
-
-            view.render(req, resp);
-
             return;
         }
 
         resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
         resp.getWriter().write("404 NOT FOUND");
+    }
+
+    private void render(ModelAndView mv, HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        String viewName = mv.getViewName();
+
+        if(viewName.startsWith("redirect:")) {
+            String redirectUrl = viewName.substring("redirect:".length());
+            resp.sendRedirect(redirectUrl);
+        }
+
+        for (Map.Entry<String, Object> entry : mv.getModel().entrySet()) {
+            req.setAttribute(entry.getKey(), entry.getValue());
+        }
+
+        ViewResolver viewResolver = new ViewResolver();
+        View view = viewResolver.resolveView(mv.getViewName());
+
+        view.render(req, resp);
     }
 }
