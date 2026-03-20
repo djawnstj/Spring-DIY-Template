@@ -4,7 +4,10 @@ import com.diy.app.LectureCreateController;
 import com.diy.app.LectureDeleteController;
 import com.diy.app.LectureListController;
 import com.diy.app.LectureUpdateController;
+import com.diy.framework.web.mvc.ModelAndView;
 import com.diy.framework.web.mvc.controller.Controller;
+import com.diy.framework.web.mvc.view.View;
+import com.diy.framework.web.mvc.view.ViewResolver;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -40,7 +43,17 @@ public class DispatcherServlet extends HttpServlet {
         Controller controller = handlerMapping.get(key);
 
         if (controller != null) {
-            controller.handleRequest(req, resp);
+            ModelAndView mv = controller.handleRequest(req, resp);
+
+            for (Map.Entry<String, Object> entry : mv.getModel().entrySet()) {
+                req.setAttribute(entry.getKey(), entry.getValue());
+            }
+
+            ViewResolver viewResolver = new ViewResolver();
+            View view = viewResolver.resolveView(mv.getViewName());
+
+            view.render(req, resp);
+
             return;
         }
 
