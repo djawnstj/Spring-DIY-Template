@@ -22,6 +22,7 @@ import java.util.Map;
 public class DispatcherServlet extends HttpServlet {
 
     private final Map<String, Controller> handlerMapping = new HashMap<>();
+    private final ViewResolver viewResolver = new ViewResolver();
 
     @Override
     public void init() {
@@ -62,13 +63,13 @@ public class DispatcherServlet extends HttpServlet {
         if(viewName.startsWith("redirect:")) {
             String redirectUrl = viewName.substring("redirect:".length());
             resp.sendRedirect(redirectUrl);
+            return;
         }
 
         for (Map.Entry<String, Object> entry : mv.getModel().entrySet()) {
             req.setAttribute(entry.getKey(), entry.getValue());
         }
 
-        ViewResolver viewResolver = new ViewResolver();
         View view = viewResolver.resolveView(mv.getViewName());
 
         view.render(req, resp);
