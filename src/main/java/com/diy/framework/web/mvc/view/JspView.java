@@ -6,7 +6,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-public class JspView {
+public class JspView implements View {
 
     private final String viewName;
 
@@ -14,7 +14,8 @@ public class JspView {
         this.viewName = viewName;
     }
 
-    public void render(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    @Override
+    public void render(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
         RequestDispatcher dispatcher = req.getRequestDispatcher(viewName);
         dispatcher.forward(req, resp);
     }
