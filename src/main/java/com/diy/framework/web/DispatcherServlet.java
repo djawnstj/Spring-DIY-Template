@@ -1,6 +1,9 @@
 package com.diy.framework.web;
 
+import com.diy.app.LectureCreateController;
+import com.diy.app.LectureDeleteController;
 import com.diy.app.LectureListController;
+import com.diy.app.LectureUpdateController;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -18,6 +21,9 @@ public class DispatcherServlet extends HttpServlet {
     @Override
     public void init() {
         handlerMapping.put("GET:/lectures", new LectureListController());
+        handlerMapping.put("POST:/lectures", new LectureCreateController());
+        handlerMapping.put("PUT:/lectures", new LectureUpdateController());
+        handlerMapping.put("DELETE:/lectures", new LectureDeleteController());
     }
 
     @Override
@@ -32,7 +38,7 @@ public class DispatcherServlet extends HttpServlet {
         Controller controller = handlerMapping.get(key);
 
         if (controller != null) {
-            controller.handle(req, resp);
+            controller.handleRequest(req, resp);
             return;
         }
 

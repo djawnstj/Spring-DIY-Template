@@ -6,10 +6,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-public class LectureListController implements Controller {
+public class LectureDeleteController implements Controller {
 
     @Override
     public void handleRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        resp.getWriter().write("강의 목록");
+        resp.getWriter().write("강의 삭제");
     }
 }
