@@ -1,5 +1,7 @@
 package com.diy.framework.web.beans.factory;
 
+import com.diy.framework.web.beans.annotation.Autowired;
+
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +22,7 @@ public class BeanFactory {
 
     private Object createBean(Class<?> clazz) {
         try {
-            Constructor<?> constructor = clazz.getDeclaredConstructors()[0];
+            Constructor<?> constructor = findConstructor(clazz);
             Object instance = constructor.newInstance();
 
             beans.put(clazz, instance);
@@ -32,5 +34,21 @@ public class BeanFactory {
 
     public Object getBean(Class<?> clazz) {
         return beans.get(clazz);
+    }
+
+    private Constructor<?> findConstructor(Class<?> clazz) {
+        Constructor<?>[] constructors = clazz.getDeclaredConstructors();
+
+        for (Constructor<?> constructor : constructors) {
+            if (constructor.isAnnotationPresent(Autowired.class)) {
+                return constructor;
+            }
+        }
+
+        try {
+            return clazz.getDeclaredConstructor();
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(clazz.getName() + "에 알맞은 생성자가 없음");
+        }
     }
 }
