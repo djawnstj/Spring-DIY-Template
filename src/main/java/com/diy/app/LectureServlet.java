@@ -45,7 +45,12 @@ public class LectureServlet extends HttpServlet {
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        super.doPut(req, resp);
+        req.setCharacterEncoding("UTF-8");
+        String pathInfo = req.getPathInfo();
+        Long id = Long.parseLong(pathInfo.substring(1));
+        Lecture lecture = objectMapper.readValue(req.getReader(), Lecture.class);
+        lectureList.put(id, lecture);
+        setCommonResponseSettings(resp, lectureList.get(id), 200);
     }
 
     @Override
@@ -57,7 +62,7 @@ public class LectureServlet extends HttpServlet {
         resp.setCharacterEncoding("UTF-8");
         resp.setContentType("application/json");
         resp.setStatus(statusCode);
-        String json = objectMapper.writeValueAsString(new Object());
+        String json = objectMapper.writeValueAsString(data);
         resp.getWriter().write(json);
     }
 }
