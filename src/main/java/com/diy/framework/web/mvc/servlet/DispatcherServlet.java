@@ -4,6 +4,9 @@ import com.diy.app.LectureCreateController;
 import com.diy.app.LectureDeleteController;
 import com.diy.app.LectureListController;
 import com.diy.app.LectureUpdateController;
+import com.diy.framework.web.beans.annotation.Component;
+import com.diy.framework.web.beans.factory.BeanFactory;
+import com.diy.framework.web.beans.factory.BeanScanner;
 import com.diy.framework.web.mvc.ModelAndView;
 import com.diy.framework.web.mvc.controller.Controller;
 import com.diy.framework.web.mvc.view.View;
@@ -17,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 @WebServlet("/")
 public class DispatcherServlet extends HttpServlet {
@@ -26,10 +30,16 @@ public class DispatcherServlet extends HttpServlet {
 
     @Override
     public void init() {
-        handlerMapping.put("GET:/lectures", new LectureListController());
-        handlerMapping.put("POST:/lectures", new LectureCreateController());
-        handlerMapping.put("PUT:/lectures", new LectureUpdateController());
-        handlerMapping.put("DELETE:/lectures", new LectureDeleteController());
+
+        BeanScanner scanner = new BeanScanner("com.diy");
+        Set<Class<?>> classes = scanner.scanClassesTypeAnnotatedWith(Component.class);
+
+        BeanFactory beanFactory = new BeanFactory(classes);
+
+        handlerMapping.put("GET:/lectures", (Controller) beanFactory.getBean(LectureListController.class));
+        handlerMapping.put("POST:/lectures", (Controller) beanFactory.getBean(LectureCreateController.class));
+        handlerMapping.put("PUT:/lectures", (Controller) beanFactory.getBean(LectureUpdateController.class));
+        handlerMapping.put("DELETE:/lectures", (Controller) beanFactory.getBean(LectureDeleteController.class));
     }
 
     @Override
