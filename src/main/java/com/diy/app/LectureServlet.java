@@ -22,16 +22,18 @@ public class LectureServlet extends HttpServlet {
     @Override
     public void init() {
         // TODO: 서블릿이 재시작되면 데이터가 날라가므로, 별도의 저장소 클래스(레포지토리 등)을 두기
-        lectureList.put(1L, new Lecture("스프링 기초", "김뿡뿡", "프로그래밍",
+        lectureList.put(1L, new Lecture(1L, "스프링 기초",
                 200000));
-        lectureList.put(2L, new Lecture("스프링 심화", "김뿡뿡", "프로그래밍",
+        lectureList.put(2L, new Lecture(2L, "스프링 심화",
                 300000));
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         Collection<Lecture> lectures = lectureList.values();
-        setCommonResponseSettings(resp, lectures, 200);
+//        setCommonResponseSettings(resp, lectures, 200);
+        req.setAttribute("lectures", lectures);
+        req.getRequestDispatcher("/lecture-list.jsp").forward(req, resp);
     }
 
 
@@ -39,8 +41,9 @@ public class LectureServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
         Lecture lecture = objectMapper.readValue(req.getReader(), Lecture.class);
-        lectureList.put(++nextId, lecture);
-        setCommonResponseSettings(resp, lecture, 201);
+        lecture.setId(++nextId);
+        lectureList.put(nextId, lecture);
+        resp.sendRedirect("/lectures");
     }
 
     @Override

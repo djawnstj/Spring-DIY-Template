@@ -4,30 +4,28 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class Lecture {
+    Long id;
     String name;
-    String instructor;
-    String category;
     int price;
 
     public Lecture() {}
 
-    public Lecture(String name, String instructor, String category, int price) {
+    public Lecture(Long id, String name, int price) {
+        this.id = id;
         this.name = name;
-        this.instructor = instructor;
-        this.category = category;
         this.price = price;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getId() {
+        return id;
     }
 
     public String getName() {
         return name;
-    }
-
-    public String getInstructor() {
-        return instructor;
-    }
-
-    public String getCategory() {
-        return category;
     }
 
     public int getPrice() {
