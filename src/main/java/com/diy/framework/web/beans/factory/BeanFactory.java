@@ -23,7 +23,20 @@ public class BeanFactory {
     private Object createBean(Class<?> clazz) {
         try {
             Constructor<?> constructor = findConstructor(clazz);
-            Object instance = constructor.newInstance();
+            Class<?>[] parameterTypes = constructor.getParameterTypes();
+            Object[] args = new Object[parameterTypes.length];
+
+            for (int i = 0; i < parameterTypes.length; i++) {
+                Class<?> paramType = parameterTypes[i];
+                Object dependency = beans.get(paramType);
+
+                if (dependency == null) {
+                    dependency = createBean(paramType);
+                }
+                args[i] = dependency;
+            }
+
+            Object instance = constructor.newInstance(args);
 
             beans.put(clazz, instance);
             return instance;
