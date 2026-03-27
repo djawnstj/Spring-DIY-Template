@@ -9,6 +9,8 @@ public class Lecture {
     String category;
     int price;
 
+    public Lecture() {}
+
     public Lecture(String name, String instructor, String category, int price) {
         this.name = name;
         this.instructor = instructor;

@@ -16,6 +16,8 @@ import java.util.Map;
 public class LectureServlet extends HttpServlet {
 
     private final Map<Long, Lecture> lectureList = new HashMap<>();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private long nextId = 2L;
 
     @Override
     public void init() {
@@ -28,18 +30,17 @@ public class LectureServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
         Collection<Lecture> lectures = lectureList.values();
-        String json = objectMapper.writeValueAsString(lectures);
-        resp.setCharacterEncoding("UTF-8");
-        resp.setContentType("application/json"); // 응답 형식 지정
-        resp.setStatus(200);
-        resp.getWriter().write(json);
+        setCommonResponseSettings(resp, lectures, 200);
     }
+
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        super.doPost(req, resp);
+        req.setCharacterEncoding("UTF-8");
+        Lecture lecture = objectMapper.readValue(req.getReader(), Lecture.class);
+        lectureList.put(++nextId, lecture);
+        setCommonResponseSettings(resp, lecture, 201);
     }
 
     @Override
@@ -50,5 +51,13 @@ public class LectureServlet extends HttpServlet {
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         super.doDelete(req, resp);
+    }
+
+    private void setCommonResponseSettings(HttpServletResponse resp, Object data, int statusCode) throws IOException {
+        resp.setCharacterEncoding("UTF-8");
+        resp.setContentType("application/json");
+        resp.setStatus(statusCode);
+        String json = objectMapper.writeValueAsString(new Object());
+        resp.getWriter().write(json);
     }
 }
