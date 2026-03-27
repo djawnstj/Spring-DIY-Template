@@ -55,7 +55,11 @@ public class LectureServlet extends HttpServlet {
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        super.doDelete(req, resp);
+        req.setCharacterEncoding("UTF-8");
+        String pathInfo = req.getPathInfo();
+        Long id = Long.parseLong(pathInfo.substring(1));
+        lectureList.remove(id);
+        setCommonResponseSettings(resp, null, 200);
     }
 
     private void setCommonResponseSettings(HttpServletResponse resp, Object data, int statusCode) throws IOException {
