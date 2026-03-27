@@ -1,10 +1,21 @@
 plugins {
     id("java")
+    id("application")
     kotlin("jvm")
 }
 
 group = "com.diy"
 version = "1.0-SNAPSHOT"
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+application {
+    mainClass = "com.diy.app.Main"
+}
 
 repositories {
     mavenCentral()
