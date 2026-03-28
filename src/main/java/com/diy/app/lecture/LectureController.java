@@ -1,9 +1,11 @@
 package com.diy.app.lecture;
 
 import com.diy.app.lecture.domain.Lecture;
+import com.diy.app.lecture.domain.LectureRepository;
 import com.diy.framework.web.Controller;
+import com.diy.framework.web.annotation.Autowired;
 import com.diy.framework.web.model.Model;
-import com.diy.framework.web.view.ViewResolver;
+import com.diy.framework.web.model.ModelAndView;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -11,19 +13,22 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class LectureController implements Controller {
-    private final Map<Long, Lecture> lectureRepository = new ConcurrentHashMap<>();
+    private final LectureRepository lectureRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final AtomicLong idSequence = new AtomicLong();
 
+    @Autowired
+    public LectureController(LectureRepository lectureRepository) {
+        this.lectureRepository = lectureRepository;
+    }
+
     @Override
-    public void handleRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        switch (request.getMethod()) {
+    public ModelAndView handleRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        return switch (request.getMethod()) {
             case "GET" -> doGet(request, response);
             case "POST" -> doPost(request, response);
             case "PUT" -> doPut(request, response);
@@ -37,16 +42,15 @@ public class LectureController implements Controller {
      * @param req
      * @param resp
      */
-    public void doGet(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+    public ModelAndView doGet(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         System.out.println("doGet called.");
 
-        final Collection<Lecture> lectures = lectureRepository.values();
+        final List<Lecture> lectures = lectureRepository.findAll();
 
         Model model = new Model();
         model.addAttribute("lectures", lectures);
 
-        ViewResolver viewResolver = new ViewResolver();
-        viewResolver.resolve("lecture-list").render(req, resp, model);
+        return new ModelAndView("lecture-list", model);
     }
 
     /**
@@ -56,7 +60,7 @@ public class LectureController implements Controller {
      * @throws ServletException
      * @throws IOException
      */
-    public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    public ModelAndView doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         System.out.println("doPost called.");
 
         try {
@@ -65,7 +69,7 @@ public class LectureController implements Controller {
             final long id = idSequence.incrementAndGet();
 
             lecture.setId(id);
-            lectureRepository.put(id, lecture);
+            lectureRepository.save(lecture);
 
             resp.setStatus(HttpServletResponse.SC_CREATED);
         } catch (JsonProcessingException e) {
@@ -73,6 +77,8 @@ public class LectureController implements Controller {
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
+
+        return new ModelAndView("redirect:/lectures");
     }
 
     /**
@@ -80,26 +86,28 @@ public class LectureController implements Controller {
      * @param req
      * @param resp
      */
-    public void doPut(HttpServletRequest req, HttpServletResponse resp) {
+    public ModelAndView doPut(HttpServletRequest req, HttpServletResponse resp) {
         System.out.println("doPut called.");
 
         try {
             final String requestUri = req.getRequestURI();
             final long id = Long.parseLong(requestUri.substring(requestUri.lastIndexOf("/") + 1));
-            if(!lectureRepository.containsKey(id)) {
+            if(!lectureRepository.existsById(id)) {
                 resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                return;
+                return null;
             }
 
             final Lecture lecture = objectMapper.readValue(req.getReader(), Lecture.class);
             lecture.setId(id);
-            lectureRepository.put(id, lecture);
+            lectureRepository.save(lecture);
             resp.setStatus(HttpServletResponse.SC_OK);
         } catch (JsonProcessingException e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
+
+        return new ModelAndView("redirect:/lectures");
     }
 
     /**
@@ -109,15 +117,17 @@ public class LectureController implements Controller {
      * @throws ServletException
      * @throws IOException
      */
-    public void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    public ModelAndView doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         System.out.println("doDelete called.");
         final String requestUri = req.getRequestURI();
         final long id = Long.parseLong(requestUri.substring(requestUri.lastIndexOf("/") + 1));
-        if(!lectureRepository.containsKey(id)) {
+        if(!lectureRepository.existsById(id)) {
             resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            return;
+        } else {
+            lectureRepository.delete(id);
+            resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
         }
-        lectureRepository.remove(id);
-        resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
+
+        return new ModelAndView("redirect:/lectures");
     }
 }
