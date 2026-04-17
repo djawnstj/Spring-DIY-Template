@@ -9,6 +9,7 @@ import com.diy.framework.web.beans.factory.BeanFactory;
 import com.diy.framework.web.beans.factory.BeanScanner;
 import com.diy.framework.web.mvc.ModelAndView;
 import com.diy.framework.web.mvc.annotation.GetMapping;
+import com.diy.framework.web.mvc.annotation.PostMapping;
 import com.diy.framework.web.mvc.controller.Controller;
 import com.diy.framework.web.mvc.view.View;
 import com.diy.framework.web.mvc.view.ViewResolver;
@@ -56,9 +57,19 @@ public class DispatcherServlet extends HttpServlet {
                 for (Method m : clazz.getDeclaredMethods()) {
 
                     if (method.equals("GET") && m.isAnnotationPresent(GetMapping.class)) {
-                        GetMapping mapping = m.getAnnotation(GetMapping.class);
+                        GetMapping getMapping = m.getAnnotation(GetMapping.class);
 
-                        if (mapping.value().equals(uri)) {
+                        if (getMapping.value().equals(uri)) {
+                            ModelAndView mv = (ModelAndView) m.invoke(bean);
+                            render(mv, req, resp);
+                            return;
+                        }
+                    }
+
+                    if (method.equals("POST") && m.isAnnotationPresent(PostMapping.class)) {
+                        PostMapping postMapping = m.getAnnotation(PostMapping.class);
+
+                        if (postMapping.value().equals(uri)) {
                             ModelAndView mv = (ModelAndView) m.invoke(bean);
                             render(mv, req, resp);
                             return;
