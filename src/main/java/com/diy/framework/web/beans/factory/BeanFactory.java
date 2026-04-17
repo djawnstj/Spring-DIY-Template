@@ -45,8 +45,8 @@ public class BeanFactory {
         }
     }
 
-    public Object getBean(Class<?> clazz) {
-        return beans.get(clazz);
+    public Map<Class<?>, Object> getBeans() {
+        return beans;
     }
 
     private Constructor<?> findConstructor(Class<?> clazz) {

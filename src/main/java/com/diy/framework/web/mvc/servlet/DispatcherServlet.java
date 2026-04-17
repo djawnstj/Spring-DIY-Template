@@ -8,6 +8,7 @@ import com.diy.framework.web.beans.annotation.Component;
 import com.diy.framework.web.beans.factory.BeanFactory;
 import com.diy.framework.web.beans.factory.BeanScanner;
 import com.diy.framework.web.mvc.ModelAndView;
+import com.diy.framework.web.mvc.annotation.GetMapping;
 import com.diy.framework.web.mvc.controller.Controller;
 import com.diy.framework.web.mvc.view.View;
 import com.diy.framework.web.mvc.view.ViewResolver;
@@ -18,6 +19,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -28,18 +30,15 @@ public class DispatcherServlet extends HttpServlet {
     private final Map<String, Controller> handlerMapping = new HashMap<>();
     private final ViewResolver viewResolver = new ViewResolver();
 
+    private BeanFactory beanFactory;
+
     @Override
     public void init() {
 
         BeanScanner scanner = new BeanScanner("com.diy");
         Set<Class<?>> classes = scanner.scanClassesTypeAnnotatedWith(Component.class);
 
-        BeanFactory beanFactory = new BeanFactory(classes);
-
-        handlerMapping.put("GET:/lectures", (Controller) beanFactory.getBean(LectureListController.class));
-        handlerMapping.put("POST:/lectures", (Controller) beanFactory.getBean(LectureCreateController.class));
-        handlerMapping.put("PUT:/lectures", (Controller) beanFactory.getBean(LectureUpdateController.class));
-        handlerMapping.put("DELETE:/lectures", (Controller) beanFactory.getBean(LectureDeleteController.class));
+        this.beanFactory = new BeanFactory(classes);
     }
 
     @Override
@@ -47,20 +46,28 @@ public class DispatcherServlet extends HttpServlet {
         resp.setContentType("text/html; charset=UTF-8");
 
         String uri = req.getRequestURI();
-
         String method = req.getMethod();
-        String key = method + ":" + uri;
 
-        Controller controller = handlerMapping.get(key);
+        try {
+            for (Object bean : beanFactory.getBeans().values()) {
 
-        if (controller != null) {
-            try {
-                ModelAndView mv = controller.handleRequest(req, resp);
-                render(mv, req, resp);
-            } catch (Exception e) {
-                throw new ServletException(e);
+                Class<?> clazz = bean.getClass();
+
+                for (Method m : clazz.getDeclaredMethods()) {
+
+                    if (method.equals("GET") && m.isAnnotationPresent(GetMapping.class)) {
+                        GetMapping mapping = m.getAnnotation(GetMapping.class);
+
+                        if (mapping.value().equals(uri)) {
+                            ModelAndView mv = (ModelAndView) m.invoke(bean);
+                            render(mv, req, resp);
+                            return;
+                        }
+                    }
+                }
             }
-            return;
+        } catch (Exception e) {
+            throw new ServletException(e);
         }
 
         resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
