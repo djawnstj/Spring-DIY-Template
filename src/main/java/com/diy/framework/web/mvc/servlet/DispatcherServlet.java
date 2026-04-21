@@ -1,14 +1,11 @@
 package com.diy.framework.web.mvc.servlet;
 
-import com.diy.app.LectureCreateController;
-import com.diy.app.LectureDeleteController;
-import com.diy.app.LectureListController;
-import com.diy.app.LectureUpdateController;
 import com.diy.framework.web.beans.annotation.Component;
 import com.diy.framework.web.beans.factory.BeanFactory;
 import com.diy.framework.web.beans.factory.BeanScanner;
 import com.diy.framework.web.mvc.ModelAndView;
-import com.diy.framework.web.mvc.controller.Controller;
+import com.diy.framework.web.mvc.annotation.GetMapping;
+import com.diy.framework.web.mvc.annotation.PostMapping;
 import com.diy.framework.web.mvc.view.View;
 import com.diy.framework.web.mvc.view.ViewResolver;
 
@@ -18,15 +15,15 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.HashMap;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 
 @WebServlet("/")
 public class DispatcherServlet extends HttpServlet {
 
-    private final Map<String, Controller> handlerMapping = new HashMap<>();
     private final ViewResolver viewResolver = new ViewResolver();
+    private BeanFactory beanFactory;
 
     @Override
     public void init() {
@@ -34,12 +31,7 @@ public class DispatcherServlet extends HttpServlet {
         BeanScanner scanner = new BeanScanner("com.diy");
         Set<Class<?>> classes = scanner.scanClassesTypeAnnotatedWith(Component.class);
 
-        BeanFactory beanFactory = new BeanFactory(classes);
-
-        handlerMapping.put("GET:/lectures", (Controller) beanFactory.getBean(LectureListController.class));
-        handlerMapping.put("POST:/lectures", (Controller) beanFactory.getBean(LectureCreateController.class));
-        handlerMapping.put("PUT:/lectures", (Controller) beanFactory.getBean(LectureUpdateController.class));
-        handlerMapping.put("DELETE:/lectures", (Controller) beanFactory.getBean(LectureDeleteController.class));
+        this.beanFactory = new BeanFactory(classes);
     }
 
     @Override
@@ -47,20 +39,43 @@ public class DispatcherServlet extends HttpServlet {
         resp.setContentType("text/html; charset=UTF-8");
 
         String uri = req.getRequestURI();
-
         String method = req.getMethod();
-        String key = method + ":" + uri;
 
-        Controller controller = handlerMapping.get(key);
+        System.out.println("method = " + method);
+        System.out.println("uri = " + uri);
 
-        if (controller != null) {
-            try {
-                ModelAndView mv = controller.handleRequest(req, resp);
-                render(mv, req, resp);
-            } catch (Exception e) {
-                throw new ServletException(e);
+        try {
+            for (Object bean : beanFactory.getBeans().values()) {
+
+                Class<?> clazz = bean.getClass();
+
+                for (Method m : clazz.getDeclaredMethods()) {
+
+                    if (m.isAnnotationPresent(GetMapping.class)) {
+                        if (!method.equals("GET")) continue;
+
+                        GetMapping getMapping = m.getAnnotation(GetMapping.class);
+                        if (getMapping.value().equals(uri)) {
+                            ModelAndView mv = (ModelAndView) m.invoke(bean);
+                            render(mv, req, resp);
+                            return;
+                        }
+                    }
+
+                    if (m.isAnnotationPresent(PostMapping.class)) {
+                        if (!method.equals("POST")) continue;
+
+                        PostMapping postMapping = m.getAnnotation(PostMapping.class);
+                        if (postMapping.value().equals(uri)) {
+                            ModelAndView mv = (ModelAndView) m.invoke(bean);
+                            render(mv, req, resp);
+                            return;
+                        }
+                    }
+                }
             }
-            return;
+        } catch (Exception e) {
+            throw new ServletException(e);
         }
 
         resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
