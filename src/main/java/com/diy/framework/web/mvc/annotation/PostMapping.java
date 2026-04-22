@@ -3,7 +3,7 @@ package com.diy.framework.web.mvc.annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-@RequestMapping(method = RequestMethod.POST)
+@RequestMapping(methods = RequestMethod.POST)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface PostMapping {
     String value();
