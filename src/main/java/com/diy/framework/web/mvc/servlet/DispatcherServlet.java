@@ -6,6 +6,8 @@ import com.diy.framework.web.beans.factory.BeanScanner;
 import com.diy.framework.web.mvc.ModelAndView;
 import com.diy.framework.web.mvc.annotation.GetMapping;
 import com.diy.framework.web.mvc.annotation.PostMapping;
+import com.diy.framework.web.mvc.handler.AnnotationHandlerMapping;
+import com.diy.framework.web.mvc.handler.HandlerExecution;
 import com.diy.framework.web.mvc.view.View;
 import com.diy.framework.web.mvc.view.ViewResolver;
 
@@ -23,63 +25,39 @@ import java.util.Set;
 public class DispatcherServlet extends HttpServlet {
 
     private final ViewResolver viewResolver = new ViewResolver();
-    private BeanFactory beanFactory;
+    private AnnotationHandlerMapping handlerMapping;
 
     @Override
     public void init() {
 
         BeanScanner scanner = new BeanScanner("com.diy");
         Set<Class<?>> classes = scanner.scanClassesTypeAnnotatedWith(Component.class);
+        BeanFactory beanFactory = new BeanFactory(classes);
 
-        this.beanFactory = new BeanFactory(classes);
+        this.handlerMapping = new AnnotationHandlerMapping(beanFactory);
+        this.handlerMapping.initialize();
     }
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
         resp.setContentType("text/html; charset=UTF-8");
 
-        String uri = req.getRequestURI();
-        String method = req.getMethod();
-
-        System.out.println("method = " + method);
-        System.out.println("uri = " + uri);
-
         try {
-            for (Object bean : beanFactory.getBeans().values()) {
 
-                Class<?> clazz = bean.getClass();
+            HandlerExecution handler = handlerMapping.getHandler(req);
 
-                for (Method m : clazz.getDeclaredMethods()) {
-
-                    if (m.isAnnotationPresent(GetMapping.class)) {
-                        if (!method.equals("GET")) continue;
-
-                        GetMapping getMapping = m.getAnnotation(GetMapping.class);
-                        if (getMapping.value().equals(uri)) {
-                            ModelAndView mv = (ModelAndView) m.invoke(bean);
-                            render(mv, req, resp);
-                            return;
-                        }
-                    }
-
-                    if (m.isAnnotationPresent(PostMapping.class)) {
-                        if (!method.equals("POST")) continue;
-
-                        PostMapping postMapping = m.getAnnotation(PostMapping.class);
-                        if (postMapping.value().equals(uri)) {
-                            ModelAndView mv = (ModelAndView) m.invoke(bean);
-                            render(mv, req, resp);
-                            return;
-                        }
-                    }
-                }
+            if (handler == null) {
+                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                resp.getWriter().write("404 NOT FOUND");
+                return;
             }
+
+            ModelAndView mv = handler.handle(req, resp);
+
+            render(mv, req, resp);
         } catch (Exception e) {
             throw new ServletException(e);
         }
-
-        resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-        resp.getWriter().write("404 NOT FOUND");
     }
 
     private void render(ModelAndView mv, HttpServletRequest req, HttpServletResponse resp) throws Exception {

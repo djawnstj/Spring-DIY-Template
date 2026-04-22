@@ -1,8 +1,6 @@
 package com.diy.framework.web.mvc.handler;
 
 import com.diy.framework.web.beans.factory.BeanFactory;
-import com.diy.framework.web.mvc.annotation.GetMapping;
-import com.diy.framework.web.mvc.annotation.PostMapping;
 import com.diy.framework.web.mvc.annotation.RequestMapping;
 
 import javax.servlet.http.HttpServletRequest;
