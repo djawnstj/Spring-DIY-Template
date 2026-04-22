@@ -4,8 +4,6 @@ import com.diy.framework.web.beans.annotation.Component;
 import com.diy.framework.web.beans.factory.BeanFactory;
 import com.diy.framework.web.beans.factory.BeanScanner;
 import com.diy.framework.web.mvc.ModelAndView;
-import com.diy.framework.web.mvc.annotation.GetMapping;
-import com.diy.framework.web.mvc.annotation.PostMapping;
 import com.diy.framework.web.mvc.handler.AnnotationHandlerMapping;
 import com.diy.framework.web.mvc.handler.HandlerExecution;
 import com.diy.framework.web.mvc.view.View;
@@ -17,7 +15,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 
