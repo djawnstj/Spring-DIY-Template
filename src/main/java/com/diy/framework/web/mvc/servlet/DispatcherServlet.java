@@ -4,8 +4,11 @@ import com.diy.framework.web.beans.annotation.Component;
 import com.diy.framework.web.beans.factory.BeanFactory;
 import com.diy.framework.web.beans.factory.BeanScanner;
 import com.diy.framework.web.mvc.ModelAndView;
+import com.diy.framework.web.mvc.controller.Controller;
 import com.diy.framework.web.mvc.handler.AnnotationHandlerMapping;
 import com.diy.framework.web.mvc.handler.HandlerExecution;
+import com.diy.framework.web.mvc.handler.HandlerMapping;
+import com.diy.framework.web.mvc.handler.InterfaceHandlerMapping;
 import com.diy.framework.web.mvc.view.View;
 import com.diy.framework.web.mvc.view.ViewResolver;
 
@@ -15,6 +18,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,7 +26,7 @@ import java.util.Set;
 public class DispatcherServlet extends HttpServlet {
 
     private final ViewResolver viewResolver = new ViewResolver();
-    private AnnotationHandlerMapping handlerMapping;
+    private List<HandlerMapping> handlerMappings;
 
     @Override
     public void init() {
@@ -31,8 +35,13 @@ public class DispatcherServlet extends HttpServlet {
         Set<Class<?>> classes = scanner.scanClassesTypeAnnotatedWith(Component.class);
         BeanFactory beanFactory = new BeanFactory(classes);
 
-        this.handlerMapping = new AnnotationHandlerMapping(beanFactory);
-        this.handlerMapping.initialize();
+        AnnotationHandlerMapping annotationHandlerMapping = new AnnotationHandlerMapping(beanFactory);
+        annotationHandlerMapping.initialize();
+
+        this.handlerMappings = List.of(
+                annotationHandlerMapping,
+                new InterfaceHandlerMapping()
+        );
     }
 
     @Override
@@ -41,7 +50,11 @@ public class DispatcherServlet extends HttpServlet {
 
         try {
 
-            HandlerExecution handler = handlerMapping.getHandler(req);
+            Object handler = null;
+            for (HandlerMapping handlerMapping : handlerMappings) {
+                handler = handlerMapping.getHandler(req);
+                if (handler != null) break;
+            }
 
             if (handler == null) {
                 resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -49,9 +62,9 @@ public class DispatcherServlet extends HttpServlet {
                 return;
             }
 
-            ModelAndView mv = handler.handle(req, resp);
-
+            ModelAndView mv = execute(handler, req, resp);
             render(mv, req, resp);
+
         } catch (Exception e) {
             throw new ServletException(e);
         }
@@ -73,5 +86,15 @@ public class DispatcherServlet extends HttpServlet {
         View view = viewResolver.resolveView(mv.getViewName());
 
         view.render(req, resp);
+    }
+
+    private ModelAndView execute(Object handler, HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        if (handler instanceof HandlerExecution) {
+            return ((HandlerExecution) handler).handle(req, resp);
+        }
+        if (handler instanceof Controller) {
+            return ((Controller) handler).handle(req, resp);
+        }
+        throw new RuntimeException("지원하지 않는 핸들러 타입");
     }
 }
