@@ -4,11 +4,7 @@ import com.diy.framework.web.beans.annotation.Component;
 import com.diy.framework.web.beans.factory.BeanFactory;
 import com.diy.framework.web.beans.factory.BeanScanner;
 import com.diy.framework.web.mvc.ModelAndView;
-import com.diy.framework.web.mvc.controller.Controller;
-import com.diy.framework.web.mvc.handler.AnnotationHandlerMapping;
-import com.diy.framework.web.mvc.handler.HandlerExecution;
-import com.diy.framework.web.mvc.handler.HandlerMapping;
-import com.diy.framework.web.mvc.handler.InterfaceHandlerMapping;
+import com.diy.framework.web.mvc.handler.*;
 import com.diy.framework.web.mvc.view.View;
 import com.diy.framework.web.mvc.view.ViewResolver;
 
@@ -27,6 +23,7 @@ public class DispatcherServlet extends HttpServlet {
 
     private final ViewResolver viewResolver = new ViewResolver();
     private List<HandlerMapping> handlerMappings;
+    private List<HandlerAdapter> handlerAdapters;
 
     @Override
     public void init() {
@@ -44,6 +41,11 @@ public class DispatcherServlet extends HttpServlet {
         this.handlerMappings = List.of(
                 annotationHandlerMapping,
                 interfaceHandlerMapping
+        );
+
+        this.handlerAdapters = List.of(
+                new SimpleControllerHandlerAdapter(),
+                new AnnotationHandlerAdapter()
         );
     }
 
@@ -65,7 +67,13 @@ public class DispatcherServlet extends HttpServlet {
                 return;
             }
 
-            ModelAndView mv = execute(handler, req, resp);
+            final Object finalHandler = handler;
+
+            HandlerAdapter handlerAdapter = handlerAdapters.stream()
+                    .filter(adapter -> adapter.checkAvailable(finalHandler))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("지원하지 않는 핸들러 타입"));
+            ModelAndView mv = handlerAdapter.execute(handler, req, resp);
             render(mv, req, resp);
 
         } catch (Exception e) {
@@ -89,15 +97,5 @@ public class DispatcherServlet extends HttpServlet {
         View view = viewResolver.resolveView(mv.getViewName());
 
         view.render(req, resp);
-    }
-
-    private ModelAndView execute(Object handler, HttpServletRequest req, HttpServletResponse resp) throws Exception {
-        if (handler instanceof HandlerExecution) {
-            return ((HandlerExecution) handler).handle(req, resp);
-        }
-        if (handler instanceof Controller) {
-            return ((Controller) handler).handle(req, resp);
-        }
-        throw new RuntimeException("지원하지 않는 핸들러 타입");
     }
 }
