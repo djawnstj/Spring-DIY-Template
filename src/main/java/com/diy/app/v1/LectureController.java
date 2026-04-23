@@ -22,6 +22,6 @@ public class LectureController implements Controller {
         }
 
         System.out.println("POST 들어옴! (인터페이스 기반)");
-        return new ModelAndView("redirect:/lectures");
+        return new ModelAndView("redirect:/v1/lectures");
     }
 }
