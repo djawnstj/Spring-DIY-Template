@@ -27,6 +27,6 @@ public class LectureController {
     @PostMapping("/v2/lectures")
     public ModelAndView createLecture() {
         System.out.println("POST 들어옴!");
-        return new ModelAndView("redirect:/lectures");
+        return new ModelAndView("redirect:/v2/lectures");
     }
 }
