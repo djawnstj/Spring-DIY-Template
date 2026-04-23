@@ -2,14 +2,12 @@ package com.diy.app;
 
 import com.diy.app.service.LectureService;
 import com.diy.framework.web.beans.annotation.Autowired;
-import com.diy.framework.web.beans.annotation.Component;
+import com.diy.framework.web.beans.annotation.Controller;
 import com.diy.framework.web.mvc.ModelAndView;
 import com.diy.framework.web.mvc.annotation.GetMapping;
 import com.diy.framework.web.mvc.annotation.PostMapping;
 
-import java.util.List;
-
-@Component
+@Controller
 public class LectureController {
 
     private final LectureService lectureService;
