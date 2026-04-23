@@ -38,9 +38,12 @@ public class DispatcherServlet extends HttpServlet {
         AnnotationHandlerMapping annotationHandlerMapping = new AnnotationHandlerMapping(beanFactory);
         annotationHandlerMapping.initialize();
 
+        InterfaceHandlerMapping interfaceHandlerMapping = new InterfaceHandlerMapping();
+        interfaceHandlerMapping.initialize(beanFactory.getBeans());
+
         this.handlerMappings = List.of(
                 annotationHandlerMapping,
-                new InterfaceHandlerMapping()
+                interfaceHandlerMapping
         );
     }
 
