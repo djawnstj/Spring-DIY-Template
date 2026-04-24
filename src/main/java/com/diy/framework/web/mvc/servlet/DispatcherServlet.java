@@ -44,7 +44,7 @@ public class DispatcherServlet extends HttpServlet {
         );
 
         this.handlerAdapters = List.of(
-                new SimpleControllerHandlerAdapter(),
+                new InterfaceHandlerAdapter(),
                 new AnnotationHandlerAdapter()
         );
     }

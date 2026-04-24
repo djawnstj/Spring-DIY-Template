@@ -6,7 +6,7 @@ import com.diy.framework.web.mvc.controller.Controller;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class SimpleControllerHandlerAdapter implements HandlerAdapter {
+public class InterfaceHandlerAdapter implements HandlerAdapter {
 
     @Override
     public boolean checkAvailable(Object handler) {
