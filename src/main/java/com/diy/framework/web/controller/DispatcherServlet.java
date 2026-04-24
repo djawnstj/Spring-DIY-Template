@@ -1,34 +1,31 @@
 package com.diy.framework.web.controller;
 
-import com.diy.app.controller.LectureController;
-import com.diy.app.repository.LectureRepository;
-import com.diy.app.service.LectureService;
+import com.diy.framework.web.controller.handler.adapter.HandlerAdapter;
+import com.diy.framework.web.controller.handler.mapping.HandlerMapping;
 import com.diy.framework.web.view.*;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
 //@WebServlet("/") // 톰캣이 자동으로 인스턴스 생성, 외부 파라미터 주입 불가 함
 public class DispatcherServlet extends HttpServlet {
-    private final Map<String, Controller> controllerMap;
 
-    public DispatcherServlet(Map<String, Controller> controllerMap) {
-        this.controllerMap = controllerMap;
+    private final List<HandlerMapping> handlerMappings;
+    private final List<HandlerAdapter> handlerAdapters;
+
+    private final List<ViewResolver> viewResolvers = new ArrayList<>();
+
+    public DispatcherServlet(List<HandlerMapping> handlerMappings, List<HandlerAdapter> handlerAdapters) {
+        this.handlerMappings = handlerMappings;
+        this.handlerAdapters = handlerAdapters;
     }
-
-    private List<ViewResolver> viewResolvers = new ArrayList<>();
 
     @Override
     public void init(final ServletConfig config) throws ServletException {
@@ -42,24 +39,39 @@ public class DispatcherServlet extends HttpServlet {
 
 
     @Override
-    protected void service(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
-//        final Map<String, ?> params = parseParams(req);
-
-        String url = req.getRequestURI();
-        Controller controller = controllerMap.get(url);
-        if (controller == null) {         //favicon.icon가 옴
-            resp.sendError(404);
-            return;
-        }
+    protected void service(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
 
         try {
-            ModelAndView modelAndView = controller.handleRequest(req, resp);
-            render(req, resp, modelAndView);
+            Object handler = getHandler(req);
+            if (handler == null) {
+                resp.sendError(404);
+                return;
+            }
 
+            HandlerAdapter handlerAdapter = getHandlerAdapter(handler);
+            ModelAndView modelAndView = handlerAdapter.handle(handler, req, resp);
+            if (modelAndView != null) {
+                render(req, resp, modelAndView);
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
+    }
+
+    private Object getHandler(HttpServletRequest req) {
+        return handlerMappings.stream()
+                .map(mapping -> mapping.getHandler(req))
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private HandlerAdapter getHandlerAdapter(Object handler) {
+        return handlerAdapters.stream()
+                .filter(adapter -> adapter.supports(handler))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("지원하지 않는 핸들러: " + handler));
     }
 
     private void render(HttpServletRequest req, HttpServletResponse resp, ModelAndView modelAndView) throws Exception {
@@ -72,16 +84,4 @@ public class DispatcherServlet extends HttpServlet {
         }
     }
 
-
-//    private Map<String, ?> parseParams(final HttpServletRequest req) throws IOException {
-//        if ("application/json".equals(req.getHeader("Content-Type"))) {
-//            final byte[] bodyBytes = req.getInputStream().readAllBytes();
-//            final String body = new String(bodyBytes, StandardCharsets.UTF_8);
-//
-//            return new ObjectMapper().readValue(body, new TypeReference<Map<String, Object>>() {
-//            });
-//        } else {
-//            return req.getParameterMap();
-//        }
-//    }
 }
