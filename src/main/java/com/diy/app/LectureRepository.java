@@ -1,0 +1,30 @@
+package com.diy.app;
+
+import com.diy.framework.context.Component;
+
+import java.util.*;
+
+@Component
+public class LectureRepository {
+    private final Map<Long, Lecture> lectures = new HashMap<>();
+
+    public List<Lecture> values() {
+        return new ArrayList<>(lectures.values());
+    }
+
+    public void save(Lecture lecture) {
+        lectures.put(lecture.getId(), lecture);
+    }
+
+    public Long nextId() {
+        return lectures.isEmpty() ? 1L : Collections.max(lectures.keySet()) + 1;
+    }
+
+    public Lecture findById(Long id) {
+        return lectures.get(id);
+    }
+
+    public void delete(Long id) {
+        lectures.remove(id);
+    }
+}
